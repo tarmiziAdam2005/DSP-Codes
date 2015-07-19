@@ -5,7 +5,8 @@
 
 //Tarmizi Adam 11/6/2015. Simple program to generate a sine function.
 // Input: --
-// Output: csv file of sine function values.
+// Output: csv/txt file of sine function values.
+// Note: play around with the number of samples (N) in one period
 
 using namespace std;
 
