@@ -19,7 +19,7 @@ int main()
     vector<int> rect;
     vector<int>::iterator it;
 
-    rect = generateRectFunc(); // generate noisy sine wave signal
+    rect = generateRectFunc(); // generate rectangular pulse
 
     for(it = rect.begin(); it < rect.end(); it++)
     {
