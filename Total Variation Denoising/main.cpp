@@ -6,7 +6,9 @@
 
 #include"LU.h"
 
-//Created by Tarmizi Adam on 19/7/2015. This program implements the Total Variation Denoising (TVD) using
+//Created by Tarmizi Adam on 19/7/2015.
+// Update 1: 9/8/2015 
+//This program implements the Total Variation Denoising (TVD) using
 // Maximization-Minimization (MM) for 1D signals. The codes herein are developed based on the authors understanding/study of
 // the notes [1] and Matlab program [2] by Prof Ivan Selesnick.
 
@@ -86,7 +88,8 @@ int main()
     x = y; //-----------
            //           |----> Initialization of x, and Dx
     Dx = diff1D(x);//---
-
+    
+    double regParam = 5.0;
     vector< vector<double> > F;
     vector< vector<double> > Lambda;
     vector<double> Dy;
@@ -99,8 +102,8 @@ int main()
         absVal(Dx);
 
         Lambda = sparseDiag(Dx);
-        F = addMatrix(Lambda, DDT); // F = Lambda + DDT
-        F = scalarMultMatrix(2,F);  // (1/regParameter)*F
+        F = scalarMultMatrix(regParam,Lambda); //F = (1/regParameter)*Lambda
+        F = addMatrix(F,DDT); // F + DDT
         Dy = diff1D(y);            // Dy
 
         LUdcmp lu(F);
