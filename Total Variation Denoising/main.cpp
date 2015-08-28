@@ -7,7 +7,7 @@
 #include"LU.h"
 
 //Created by Tarmizi Adam on 19/7/2015.
-// Update 1: 9/8/2015 
+// Update 1: 9/8/2015, Update 2: 27/8/2015
 //This program implements the Total Variation Denoising (TVD) using
 // Maximization-Minimization (MM) for 1D signals. The codes herein are developed based on the authors understanding/study of
 // the notes [1] and Matlab program [2] by Prof Ivan Selesnick.
@@ -53,7 +53,7 @@ template<class T> void printArray2D(vector< vector<T> > &I); // Function to show
 
 int main()
 {
-    ifstream in("RectDataNoisy.txt");
+    ifstream in("speech.txt");
 
     vector<double> y;
     vector<double> x;
@@ -62,8 +62,8 @@ int main()
     vector<double> e = {-1,2,-1}; // first order difference
 
     double vals =0.0;
-    int nIt =10;
-    int k =0;
+    int nIt = 20; // Numbers of iteration
+    int k =0; // iteration count
 
     if(!in)
     {
@@ -88,14 +88,15 @@ int main()
     x = y; //-----------
            //           |----> Initialization of x, and Dx
     Dx = diff1D(x);//---
-    
-    double regParam = 5.0;
+
+    double regParam = 0.07; // Regularization parameter. Play around with this to see denoising effects.
     vector< vector<double> > F;
     vector< vector<double> > Lambda;
     vector<double> Dy;
-    vector<double> FDy;
-    vector<double>y_minus_DTFDy;
+    //vector<double> FDy;
+    //vector<double>y_minus_DTFDy;
     vector<double> Dt;
+    vector<double> z(255,0.0); // initialize... 255 is the size of the output denoised signal.
 
     do
     {
@@ -104,28 +105,32 @@ int main()
         Lambda = sparseDiag(Dx);
         F = scalarMultMatrix(regParam,Lambda); //F = (1/regParameter)*Lambda
         F = addMatrix(F,DDT); // F + DDT
-        Dy = diff1D(y);            // Dy
+        Dy = diff1D(y); // Dy
+
+        // The overall update for x is x =  y - DT(F)^-1*Dy
+        // computing the inverse of F i.e. F^-1 in the above is expensive.
+        // Instead we can have the update as x = y - DT*z
+        // where z is the solution to the linear system, (F + DDT)z = Dy
 
         LUdcmp lu(F);
-        lu.inverse(F); // F^-1
+        lu.solve(Dy,z); // Here we solve the linear system (F + DDT)z = Dy
 
-        FDy = matrixVectMuliply(Dy,F); //(F^-1)Dy
-        Dt = DT(FDy); // DT(F^-1)Dy
+        Dt = DT(z); // this is DT*z
 
-        x = vecSubtract(y,Dt); // y - DT(F^-1)Dy
+        x = vecSubtract(y,Dt); // y - DT*z. This is the update stage of x.
 
-        Dx = diff1D(x); // update value of Dx
+        Dx = diff1D(x); // update value of Dx. Produces a signal length with N-1 of the original
 
         Dx.push_back(0); // zero pad a sample, because diff1D() decreases signal (x) sample by one.
 
         k++;
 
-        cout << "Iteration: " << k << endl;
+        //cout << "Iteration: " << k << endl;
     }while (k != nIt);
 
-    ofstream f("result.txt");
+    cout << "Done denoising signal !!! Check output file" << endl;
+    ofstream f("resultSpeech.txt");
 
-    cout << Dx.size() << endl;
     for(int i =0; i < x.size(); i++)
     {
         f << x[i] << endl;
@@ -248,7 +253,7 @@ vector< vector<double> > scalarMultMatrix(double regParam, vector< vector<double
     {
         for(int j =0; j< A[0].size(); j++)
         {
-            B[i][j] = (2.0/regParam)*A[i][j];
+            B[i][j] = (1.0/regParam)*A[i][j];
         }
     }
 
